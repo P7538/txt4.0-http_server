@@ -107,37 +107,13 @@ txt_factory.init_servomotor_factory()
 
 
 TXT_M = txt_factory.controller_factory.create_graphical_controller()
-TXT_M_I1_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 1)
-input.append(TXT_M_I1_mini_switch)
-TXT_M_I2_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 2)
-input.append(TXT_M_I2_mini_switch)
-##TXT_M_I2_photo_transistor = txt_factory.input_factory.create_photo_transistor(TXT_M, 2)
-##TXT_M_I3_ultrasonic_distance_meter = txt_factory.input_factory.create_ultrasonic_distance_meter(TXT_M, 3)
-TXT_M_I3_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 3)
-input.append(TXT_M_I3_mini_switch)
-TXT_M_I4_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 4)
-input.append(TXT_M_I4_mini_switch)
-TXT_M_I5_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 5)
-input.append(TXT_M_I5_mini_switch)
-TXT_M_I6_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 6)
-input.append(TXT_M_I6_mini_switch)
-TXT_M_I7_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 7)
-input.append(TXT_M_I7_mini_switch)
-TXT_M_I8_mini_switch = txt_factory.input_factory.create_photo_resistor(TXT_M, 8)
-input.append(TXT_M_I8_mini_switch)
-TXT_M_C1_mini_switch = txt_factory.counter_factory.create_mini_switch_counter(TXT_M, 1)
-counter.append(TXT_M_C1_mini_switch)
-TXT_M_C2_mini_switch = txt_factory.counter_factory.create_mini_switch_counter(TXT_M, 2)
-counter.append(TXT_M_C2_mini_switch)
-TXT_M_C3_mini_switch = txt_factory.counter_factory.create_mini_switch_counter(TXT_M, 3)
-counter.append(TXT_M_C3_mini_switch)
-TXT_M_C4_mini_switch = txt_factory.counter_factory.create_mini_switch_counter(TXT_M, 4)
-counter.append(TXT_M_C4_mini_switch)
+for x in range (8):
+    input.append(txt_factory.input_factory.create_photo_resistor(TXT_M, x+1))
+for x in range (4):
+    counter.append(txt_factory.counter_factory.create_mini_switch_counter(TXT_M, x+1))
 for x in range (8): 
     output.append(txt_factory.output_factory.create_led(TXT_M,x+1))
 for x in range(3):
     servo.append(txt_factory.servomotor_factory.create_servomotor(TXT_M,x+1))
-
 txt_factory.initialized()
-
 server.serve_forever() ##runs infinitely
