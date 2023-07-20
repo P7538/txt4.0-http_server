@@ -36,10 +36,7 @@ class NewHTTP(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*"),
         self.end_headers()
-        print(post_body)
-        print(str(post_body).split('=', 1)[1])
         if(str(post_body)[2] == "i"):
-            print(str(post_body))
             self.wfile.write(self.changein(post_body))
         elif(str(post_body)[2] == "c"):
             counter[int(str(post_body)[3])-1].reset()
@@ -58,12 +55,10 @@ class NewHTTP(BaseHTTPRequestHandler):
             val = str(post_body).split('=', 1)[1][:-1]
             if(val == "0x0a"):
                 input[int(str(post_body)[3])-1] = txt_factory.input_factory.create_color_sensor(TXT_M, int(str(post_body)[3]))
-                print(int(str(post_body)[3])-1)
                 inputs[int(str(post_body)[3])-1] = 0x0a
                 return bytes("ok", "utf-8")
             elif(val == "0x0b"): 
                 input[int(str(post_body)[3])-1] = txt_factory.input_factory.create_photo_resistor(TXT_M, int(str(post_body)[3]))
-                print(int(str(post_body)[3])-1)
                 inputs[int(str(post_body)[3])-1] = 0x0b       
                 return bytes("ok", "utf-8")
             else: 
@@ -95,15 +90,12 @@ class NewHTTP(BaseHTTPRequestHandler):
     def setservo(self, post_body):
         try:
             val = int(str(post_body).split('=', 1)[1][:-1])
-            print(val)
-            print(int(str(post_body)[3]))
             servo[int(str(post_body)[3])-1].set_position(val)
             return bytes("ok", "utf-8")           
         except Exception as e:
             return bytes("error:"+str(e), "utf-8")
 
 server = HTTPServer((HOST, PORT ), NewHTTP) ##server is started 
-print("go")
 txt_factory.init()
 txt_factory.init_input_factory()
 txt_factory.init_motor_factory()
