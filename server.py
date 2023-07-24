@@ -3,8 +3,8 @@ from fischertechnik.controller.Motor import Motor
 import fischertechnik.factories as txt_factory
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import socketserver 
-HOST = "192.168.7.2"  # txt 4.0 
+import socketserver
+HOST = "192.168.7.2"  # txt 4.0
 ##HOST  = "127.0.0.1"
 PORT = 8000  # Port to listen on (non-privileged ports are > 1023)
 inputs = [0x0b, 0x0b, 0x0b, 0x0b,0x0b, 0x0b,0x0b, 0x0b]
@@ -13,7 +13,7 @@ counter  = []
 output = []
 servo = []
 class NewHTTP(BaseHTTPRequestHandler):
-    def do_GET(self): 
+    def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*"),
@@ -21,14 +21,21 @@ class NewHTTP(BaseHTTPRequestHandler):
         ##TXT_M_I1_color_sensor.get_voltage()
         ##result = { "i1":str(TXT_M_I1_mini_switch.get_resistance())}
         result = dict()
-        for i in range(8): 
+        for i in range(8):
             if(inputs[i]==0x0b):
-                result.update({ "i"+str(i+1) : str(input[i].get_resistance())})
-            else: 
+                 result.update({ "i"+str(i+1) : str(input[i].get_resistance())})
+            else:
                 result.update({ "i"+str(i+1) : str(input[i].get_voltage())})
-        for n in range(4): 
+        for n in range(4):
             result.update({ "c"+str(n+1) : str(counter[n].get_count())})
         self.wfile.write(bytes(json.dumps(result), "utf-8"))
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*"),
+        self.send_header("Access-Control-Allow-Headers", "*"),
+        self.end_headers()
+
 
     def do_POST(self):
         content_len = int(self.headers.get("Content-Length"))
@@ -36,66 +43,68 @@ class NewHTTP(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*"),
         self.end_headers()
-        if(str(post_body)[2] == "i"):
+        post_body = json.loads(post_body.decode("utf-8"))
+        if(str(post_body["port"])[0] == "i"):
             self.wfile.write(self.changein(post_body))
-        elif(str(post_body)[2] == "c"):
-            counter[int(str(post_body)[3])-1].reset()
+        elif(str(post_body["port"])[0] == "c"):
+            counter[int(str(post_body["port"])[1])-1].reset()
             self.wfile.write(bytes("ok", "utf-8"))
-        elif(str(post_body)[2] == "o"): 
+        elif(str(post_body["port"])[0] == "o"):
             self.wfile.write(self.setout(post_body))
-        elif(str(post_body)[2] == "m"):
+        elif(str(post_body["port"])[0] == "m"):
             self.wfile.write(self.setmotor(post_body))
-        elif(str(post_body)[2] == "s"):
+        elif(str(post_body["port"])[0] == "s"):
             self.wfile.write(self.setservo(post_body))
         else:
             self.wfile.write(bytes("undefined", "utf-8"))
 
-    def changein(self, post_body): 
+    def changein(self, post_body):
         try:
-            val = str(post_body).split('=', 1)[1][:-1]
-            if(val == "0x0a"):
-                input[int(str(post_body)[3])-1] = txt_factory.input_factory.create_color_sensor(TXT_M, int(str(post_body)[3]))
-                inputs[int(str(post_body)[3])-1] = 0x0a
+            val = post_body["val"]
+            if(val == 0x0a):
+
+                input[int(str(post_body["port"])[1])-1] = txt_factory.input_factory.create_color_sensor(TXT_M, int(str(post_body["port"])[1]))
+                inputs[int(str(post_body["port"])[1])-1] = 0x0a
                 return bytes("ok", "utf-8")
-            elif(val == "0x0b"): 
-                input[int(str(post_body)[3])-1] = txt_factory.input_factory.create_photo_resistor(TXT_M, int(str(post_body)[3]))
-                inputs[int(str(post_body)[3])-1] = 0x0b       
+            elif(val == 0x0b):
+                input[int(str(post_body["port"])[1])-1] = txt_factory.input_factory.create_photo_resistor(TXT_M, int(str(post_body["port"])[1]))
+                inputs[int(str(post_body["port"])[1])-1] = 0x0b
                 return bytes("ok", "utf-8")
-            else: 
+            else:
                 return bytes("mode not defined", "utf-8")
         except Exception as e:
             return bytes("error:"+str(e), "utf-8")
 
     def setout(self, post_body):
         try:
-            val = int(str(post_body).split('=', 1)[1][:-1])
-            output[int(str(post_body)[3])-1].set_brightness(val)
+            val = int(str(post_body["val"]))
+            output[int(str(post_body["port"])[1])-1].set_brightness(val)
             return bytes("ok", "utf-8")
         except Exception as e:
             return bytes("error:"+str(e), "utf-8")
 
-    def setmotor(self, post_body): 
+    def setmotor(self, post_body):
         try:
-            val = int(str(post_body).split('=', 1)[1][:-1])
+            val = int(str(post_body["val"]))
             if(val>0):
-                output[int(str(post_body)[3])].set_brightness(0)
-                output[int(str(post_body)[3])-1].set_brightness(val)
-            else: 
-                output[int(str(post_body)[3])].set_brightness(val*(-1))
-                output[int(str(post_body)[3])-1].set_brightness(0) 
-            return bytes("ok", "utf-8")   
-        except Exception as e:
-            return bytes("error:"+str(e), "utf-8")
-        
-    def setservo(self, post_body):
-        try:
-            val = int(str(post_body).split('=', 1)[1][:-1])
-            servo[int(str(post_body)[3])-1].set_position(val)
-            return bytes("ok", "utf-8")           
+                output[int(str(post_body["port"])[1])].set_brightness(0)
+                output[int(str(post_body["port"])[1])-1].set_brightness(val)
+            else:
+                output[int(str(post_body["port"])[1])].set_brightness(val*(-1))
+                output[int(str(post_body["port"])[1])-1].set_brightness(0)
+            return bytes("ok", "utf-8")
         except Exception as e:
             return bytes("error:"+str(e), "utf-8")
 
-server = HTTPServer((HOST, PORT ), NewHTTP) ##server is started 
+    def setservo(self, post_body):
+        try:
+            val = int(str(post_body["val"]))
+            servo[int(str(post_body["port"])[1])-1].set_position(val)
+            return bytes("ok", "utf-8")
+        except Exception as e:
+            return bytes("error:"+str(e), "utf-8")
+
+server = HTTPServer((HOST, PORT ), NewHTTP) ##server is started
 txt_factory.init()
 txt_factory.init_input_factory()
 txt_factory.init_motor_factory()
@@ -111,7 +120,7 @@ for x in range (8):
     input.append(txt_factory.input_factory.create_photo_resistor(TXT_M, x+1))
 for x in range (4):
     counter.append(txt_factory.counter_factory.create_mini_switch_counter(TXT_M, x+1))
-for x in range (8): 
+for x in range (8):
     output.append(txt_factory.output_factory.create_led(TXT_M,x+1))
 for x in range(3):
     servo.append(txt_factory.servomotor_factory.create_servomotor(TXT_M,x+1))
